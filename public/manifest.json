@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "Current URL",
+    "version": "1.0",
+    "description": "Shows the URL of the current website",
+    "action": {
+      "default_popup": "index.html",
+      "default_title": "Current URL"
+    },
+    "permissions": [
+      "activeTab"
+    ]
+  }
