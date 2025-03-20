@@ -16,7 +16,13 @@
 4. **Build the react app**
     ```bash
     npm run build
-You will see a new directory created called dist/ which contains the necessary files to create a chrome extension app. Once the build succeeds, head over to browsers extensions , enable ‘Developer mode’ and ‘Load unpacked’ by selecting the dist directory that was just created!
+This will generate the build files in the dist directory.
+
+## Load Extensions in Browser
+1. Open Your browser and navigate to Manage Extensions
+2. Enable "Developer mode" 
+3. Click "Load unpacked" and select the `dist` directory.
+
 ## Backend Setup
 ...
 
