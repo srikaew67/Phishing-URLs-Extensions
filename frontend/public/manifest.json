@@ -1,13 +1,13 @@
 {
-    "manifest_version": 3,
-    "name": "Current URL",
-    "version": "1.0",
-    "description": "Shows the URL of the current website",
-    "action": {
-      "default_popup": "index.html",
-      "default_title": "Current URL"
-    },
-    "permissions": [
-      "activeTab"
-    ]
+  "manifest_version": 3,
+  "name": "Phishing URL Detector",
+  "version": "1.0",
+  "permissions": ["activeTab", "tabs", "storage"],
+  "host_permissions": ["http://localhost:8000/"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "index.html"
   }
+}
