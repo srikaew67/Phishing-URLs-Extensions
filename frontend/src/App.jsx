@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PanelsTopLeft, Link2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "./assets/Logo.svg";
@@ -16,7 +16,7 @@ export default function App() {
           Phishing URLs Detection
         </h1>
       </div>
-      <div className="flex justify-center my-5">
+      <div className="flex justify-center my-8">
         <button
           onClick={() => setCurrentPage("page1")}
           className={`group relative mr-3 h-10 overflow-hidden rounded-2xl ${

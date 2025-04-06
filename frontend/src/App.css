@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* Hide scrollbar but keep scrollable content */
+.url-scroll {
+    overflow-x: scroll;
+    white-space: nowrap;
+    max-width: 170px; /* Adjust width as needed */
+  }
+  
+  .url-scroll::-webkit-scrollbar {
+    display: none; /* Hides the scrollbar */
+  }
+  
