@@ -1,19 +1,12 @@
-import React, { useState } from "react";
-import "./App.css";
-import { PanelsTopLeft, Link2 ,OctagonAlert } from "lucide-react";
+import { useState } from "react";
+import { PanelsTopLeft, Link2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "./assets/Logo.svg";
+import ScanUrl from "./page/ScanUrl";
+import ScanPage from "./page/ScanPage";
 
-function App() {
-  const [activePage, setActivePage] = useState("page1");
-
-  const handleScanPage = () => {
-    setActivePage("page1");
-  };
-
-  const handleScanURL = () => {
-    setActivePage("page2");
-  };
+export default function App() {
+  const [currentPage, setCurrentPage] = useState("page1");
 
   return (
     <div className="font-poppins w-2xs h-[480px] p-2">
@@ -23,81 +16,88 @@ function App() {
           Phishing URLs Detection
         </h1>
       </div>
-      <div className="flex justify-center mt-3">
+      <div className="flex justify-center my-5">
         <button
-          onClick={handleScanPage}
-          className="group relative mr-3 h-10 overflow-hidden rounded-2xl bg-neutral-100 px-2 py-1 text-black shadow-lg"
+          onClick={() => setCurrentPage("page1")}
+          className={`group relative mr-3 h-10 overflow-hidden rounded-2xl ${
+            currentPage === "page1"
+              ? "bg-blue-500 text-white"
+              : "bg-neutral-100 text-black"
+          } px-2 py-1 shadow-lg`}
         >
-          <span className="text-sm group-hover:text-white relative z-10 transition-colors duration-500 flex">
+          <span
+            className={`text-sm relative z-10 transition-colors duration-500 flex ${
+              currentPage === "page1" ? "text-white" : "group-hover:text-white"
+            }`}
+          >
             Scan this page
-            <span className="text-blue-500 group-hover:text-white transition-colors duration-500 pl-1">
+            <span
+              className={`${
+                currentPage === "page1"
+                  ? "text-white"
+                  : "text-blue-500 group-hover:text-white"
+              } transition-colors duration-500 pl-1`}
+            >
               <PanelsTopLeft strokeWidth={1.75} />
             </span>
           </span>
           <span className="absolute inset-0 overflow-hidden rounded-md">
-            <span className="absolute left-0 aspect-square w-full origin-center -translate-x-full rounded-full bg-blue-500 transition-all duration-500 group-hover:translate-x-0 group-hover:scale-150"></span>
+            <span
+              className={`absolute left-0 aspect-square w-full origin-center rounded-full bg-blue-500 transition-all duration-500 ${
+                currentPage === "page1"
+                  ? "translate-x-0 scale-150"
+                  : "-translate-x-full group-hover:translate-x-0 group-hover:scale-150"
+              }`}
+            ></span>
           </span>
         </button>
         <button
-          onClick={handleScanURL}
-          className="group relative h-10 overflow-hidden rounded-2xl bg-neutral-100 px-2 py-1 text-black shadow-lg"
+          onClick={() => setCurrentPage("page2")}
+          className={`group relative h-10 overflow-hidden rounded-2xl ${
+            currentPage === "page2"
+              ? "bg-blue-500 text-white"
+              : "bg-neutral-100 text-black"
+          } px-2 py-1 shadow-lg`}
         >
-          <span className="text-sm group-hover:text-white relative z-10 transition-colors duration-500 flex">
+          <span
+            className={`text-sm relative z-10 transition-colors duration-500 flex ${
+              currentPage === "page2" ? "text-white" : "group-hover:text-white"
+            }`}
+          >
             Scan URL
-            <span className="text-blue-500 group-hover:text-white transition-colors duration-500 pl-1">
+            <span
+              className={`${
+                currentPage === "page2"
+                  ? "text-white"
+                  : "text-blue-500 group-hover:text-white"
+              } transition-colors duration-500 pl-1`}
+            >
               <Link2 strokeWidth={1.75} />
             </span>
           </span>
           <span className="absolute inset-0 overflow-hidden rounded-md">
-            <span className="absolute left-0 aspect-square w-full origin-center -translate-x-full rounded-full bg-blue-500 transition-all duration-500 group-hover:translate-x-0 group-hover:scale-150"></span>
+            <span
+              className={`absolute left-0 aspect-square w-full origin-center rounded-full bg-blue-500 transition-all duration-500 ${
+                currentPage === "page2"
+                  ? "translate-x-0 scale-150"
+                  : "-translate-x-full group-hover:translate-x-0 group-hover:scale-150"
+              }`}
+            ></span>
           </span>
         </button>
       </div>
 
       <AnimatePresence mode="wait">
-        {activePage === "page1" && (
-          <motion.div
-            key="page1"
-            initial={{ opacity: 0, x: -50 }} // page1 comes from the left
-            animate={{ opacity: 1, x: 0 }} // page1 animates to its original position
-            exit={{ opacity: 0, x: 50 }} // page1 exits to the right
-            transition={{ duration: 0.5 }}
-            className="text-center text-base mt-5 text-lg"
-          >
-            <div>
-              <div className="text-sm rounded-2xl bg-natural-100 px-2 py-2 text-black shadow-lg flex justify-between">
-                <p>This URL : Test</p>
-                <span className="text-blue-500">
-                  {" "}
-                  <Link2 strokeWidth={1.75} />
-                </span>
-              </div>
-              <div className="mt-10">
-                <p className="text-left">Numbers of URLs</p>
-                <div>
-                  <div>
-                    <p>Phishing URLs <span className="bg-yellow-400 text-black"><OctagonAlert /></span></p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-        {activePage === "page2" && (
-          <motion.div
-            key="page2"
-            initial={{ opacity: 0, x: -50 }} // page2 comes from the right
-            animate={{ opacity: 1, x: 0 }} // page2 animates to its original position
-            exit={{ opacity: 0, x: 50 }} // page2 exits to the left
-            transition={{ duration: 0.5 }}
-            className="text-center mt-5 font-bold text-lg"
-          >
-            Insert
-          </motion.div>
-        )}
+        <motion.div
+          key={currentPage}
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 50 }}
+          transition={{ duration: 0.5 }}
+        >
+          {currentPage === "page1" ? <ScanPage /> : <ScanUrl />}
+        </motion.div>
       </AnimatePresence>
     </div>
   );
 }
-
-export default App;
