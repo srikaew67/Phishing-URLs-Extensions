@@ -1,0 +1,7 @@
+fastapi==0.115.11
+uvicorn==0.34.0
+pydantic==2.10.6
+transformers==4.51.1
+tensorflow==2.10.0
+numpy==1.23.5  # required for TensorFlow compatibility
+typing_extensions==4.12.2  # needed for full compatibility with older Pydantic/TensorFlow versions

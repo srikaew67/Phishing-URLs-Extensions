@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { PanelsTopLeft, Link2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "./assets/Logo.svg";
-import ScanUrl from "./page/ScanUrl";
-import ScanPage from "./page/ScanPage";
+import ScanUrl from "./components/ScanUrl";
+import ScanPage from "./components/ScanPage";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("page1");
@@ -19,14 +19,14 @@ export default function App() {
       <div className="flex justify-center my-8">
         <button
           onClick={() => setCurrentPage("page1")}
-          className={`group relative mr-3 h-10 overflow-hidden rounded-2xl ${
+          className={`group relative mr-3 h-10 overflow-hidden rounded-xl ${
             currentPage === "page1"
               ? "bg-blue-500 text-white"
               : "bg-neutral-100 text-black"
-          } px-2 py-1 shadow-lg`}
+          } px-2 py-1 shadow-[0px_0px_10px_-3px_rgba(0,_0,_0,_0.8)]`}
         >
           <span
-            className={`text-sm relative z-10 transition-colors duration-500 flex ${
+            className={`text-sm items-center relative z-10 transition-colors duration-500 flex ${
               currentPage === "page1" ? "text-white" : "group-hover:text-white"
             }`}
           >
@@ -53,14 +53,14 @@ export default function App() {
         </button>
         <button
           onClick={() => setCurrentPage("page2")}
-          className={`group relative h-10 overflow-hidden rounded-2xl ${
+          className={`group relative h-10 overflow-hidden rounded-xl ${
             currentPage === "page2"
               ? "bg-blue-500 text-white"
               : "bg-neutral-100 text-black"
-          } px-2 py-1 shadow-lg`}
+          } px-2 py-1 shadow-[0px_0px_10px_-3px_rgba(0,_0,_0,_0.8)]`}
         >
           <span
-            className={`text-sm relative z-10 transition-colors duration-500 flex ${
+            className={`text-sm items-center relative z-10 transition-colors duration-500 flex ${
               currentPage === "page2" ? "text-white" : "group-hover:text-white"
             }`}
           >

@@ -1,23 +1,79 @@
-from fastapi import FastAPI
+from fastapi import FastAPI , Body
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
+from typing import List
+from transformers import DistilBertTokenizer
+import tensorflow as tf
 
+# Load model from SavedModel directory
+model = tf.saved_model.load("model/distilbert_url_classifier")
+predict_fn = model.signatures["serving_default"]
+
+# Load tokenizer
+tokenizer = DistilBertTokenizer.from_pretrained("model/distilbert_tokenizer")
+
+# FastAPI app
 app = FastAPI()
 
-# Allow CORS for all origins (for development)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Can be restricted to specific origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-class URLRequest(BaseModel):
+# Input schema
+class URLInput(BaseModel):
     url: str
 
-@app.post("/scan-url")  # Ensure this route is defined with POST method
-async def scan_url(request: URLRequest):
-    # Process the URL or do the phishing check
-    print(f"Received URL: {request.url}")
-    return {"message": "URL received"}
+class MultipleUrlsRequest(BaseModel):
+    urls: List[str]
+
+# Prediction logic
+def predict(url: str):
+    # Tokenize the URL
+    inputs = tokenizer(
+        url,
+        padding="max_length",
+        truncation=True,
+        max_length=64,
+        return_tensors="tf"
+    )
+
+    # Prepare model inputs - match expected names
+    model_inputs = {
+        "inputs": inputs["input_ids"],
+        "inputs_1": inputs["attention_mask"]
+    }
+
+    # Run prediction
+    outputs = predict_fn(**model_inputs)
+
+    # Extract probability from model output
+    prob = float(outputs["output"].numpy()[0][0])
+    prediction = "Phishing" if prob > 0.5 else "Legitimate"
+    confidence = max(prob, 1 - prob)
+
+    return {
+        "url": url,
+        "probability": prob,
+        "prediction": prediction,
+        "confidence": confidence
+    }
+
+# Predict endpoint
+@app.post("/url")
+async def predict_url(request: URLInput):
+    url = request.url
+    print(f"Received URL: {url}")
+    result = predict(url)
+    print(result)
+    return {
+        "status": "success",
+        "result": result
+    }
+
+@app.post("/urls")
+async def predict_urls(request: MultipleUrlsRequest):
+    results = []
+    for url in request.urls:
+        result = predict(url)
+        results.append(result)
+        print(result)
+    return {
+        "status": "success",
+        "count": len(list(filter(lambda r: r["prediction"] == "Phishing", results))),
+        "results": results
+    }
