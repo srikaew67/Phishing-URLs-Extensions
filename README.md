@@ -25,11 +25,11 @@ This will generate the build files in the dist directory.
 
 ## Backend Setup
 1. **Navigate to Frontend Directory**
-```bash
-   cd backend
+    ```bash
+    cd backend
 2. **Install requirements**
-```bash
+    ```bash
     pip install -r requirements.txt
 3. **Run the function**
-```bash
+    ```bash
     uvicorn main:app --reload
