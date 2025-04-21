@@ -5,11 +5,11 @@ from transformers import DistilBertTokenizer
 import tensorflow as tf
 
 # Load model from SavedModel directory
-model = tf.saved_model.load("model/distilbert_url_classifier")
+model = tf.saved_model.load("models/distilbert_url_classifier")
 predict_fn = model.signatures["serving_default"]
 
 # Load tokenizer
-tokenizer = DistilBertTokenizer.from_pretrained("model/distilbert_tokenizer")
+tokenizer = DistilBertTokenizer.from_pretrained("models/distilbert_tokenizer")
 
 # FastAPI app
 app = FastAPI()
