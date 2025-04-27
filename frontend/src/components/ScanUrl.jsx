@@ -1,10 +1,33 @@
 import React, { useState } from "react";
-import { Link2, Play } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Link2, Play, OctagonAlert, ShieldCheck } from "lucide-react";
 
 const ScanUrl = () => {
   const [url, setUrl] = useState("");
   const [predictResult, setpredictResult] = useState("");
+
+  const setoutput = (data) => {
+    if (data.prediction === "Phishing") {
+      setpredictResult(
+        <div className="flex justify-center items-center gap-2 mt-5 text-lg">
+          <span>This URL is </span>
+          <span className="text-red-600 flex items-center gap-1">
+            Dangerous
+            <OctagonAlert strokeWidth={1.75} />
+          </span>
+        </div>
+      );
+    } else {
+      setpredictResult(
+        <div className="flex justify-center items-center text-green-600 gap-2 mt-5 text-lg">
+          <span>This URL is </span>
+          <span className="text-green-600 flex items-center gap-1">
+            Safe
+            <ShieldCheck strokeWidth={1.75} />
+          </span>
+        </div>
+      );
+    }
+  };
 
   const handleChange = (e) => {
     setUrl(e.target.value);
@@ -22,7 +45,7 @@ const ScanUrl = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setpredictResult(data.result.prediction);
+        setoutput(data.result);
       } else {
         console.error(
           "Error sending external URLs to backend",
