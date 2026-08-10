@@ -1,93 +1,96 @@
-import React, { useState } from "react";
-import { Link2, Play, OctagonAlert, ShieldCheck } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import { Link2, Play, AlertCircle } from "lucide-react";
+import { usePhishingApi } from "../hooks/usePhishingApi";
+import LoadingSpinner from "./LoadingSpinner";
+import StatusBadge from "./StatusBadge";
 
 const ScanUrl = () => {
   const [url, setUrl] = useState("");
-  const [predictResult, setpredictResult] = useState("");
+  const { loading, error, result, scanUrl, reset } = usePhishingApi();
 
-  const setoutput = (data) => {
-    if (data.prediction === "Phishing") {
-      setpredictResult(
-        <div className="flex justify-center items-center gap-2 mt-5 text-lg">
-          <span>This URL is </span>
-          <span className="text-red-600 flex items-center gap-1">
-            Dangerous
-            <OctagonAlert strokeWidth={1.75} />
-          </span>
-        </div>
-      );
-    } else {
-      setpredictResult(
-        <div className="flex justify-center items-center text-green-600 gap-2 mt-5 text-lg">
-          <span>This URL is </span>
-          <span className="text-green-600 flex items-center gap-1">
-            Safe
-            <ShieldCheck strokeWidth={1.75} />
-          </span>
-        </div>
-      );
-    }
-  };
+  const handleScan = useCallback(async () => {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    await scanUrl(trimmed);
+  }, [url, scanUrl]);
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     setUrl(e.target.value);
-  };
+    if (result || error) reset();
+  }, [result, error, reset]);
 
-  const sendUrl = async () => {
-    console.log("URL to scan:", url); // use state directly
-    try {
-      const response = await fetch("http://127.0.0.1:8000/url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setoutput(data.result);
-      } else {
-        console.error(
-          "Error sending external URLs to backend",
-          response.status,
-          response.statusText
-        );
-      }
-    } catch (error) {
-      console.error("Network error when sending external URLs:", error);
-    }
-  };
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === "Enter") handleScan();
+  }, [handleScan]);
 
   return (
-    <div>
-      <div className="text-sm rounded-xl bg-natural-100 px-2 py-2 text-black shadow-[0px_0px_10px_-3px_rgba(0,_0,_0,_0.8)] flex justify-between">
-        <p className="flex items-center">
-          Insert URL:
+    <div className="flex flex-col h-full">
+      {/* URL input */}
+      <div className="text-sm rounded-xl bg-neutral-100 px-3 py-2 text-black shadow-sm flex justify-between items-center gap-2">
+        <p className="flex items-center gap-1 flex-1 min-w-0">
+          <span className="shrink-0 text-gray-500">URL:</span>
           <input
+            id="url-input"
             type="text"
             value={url}
             onChange={handleChange}
-            className="w-4/6 focus:outline-none focus:border-transparent  border-gray-300"
+            onKeyDown={handleKeyDown}
+            placeholder="https://example.com"
+            aria-label="Enter URL to scan"
+            className="flex-1 min-w-0 bg-transparent focus:outline-none placeholder:text-gray-400"
           />
         </p>
-        <span className="text-blue-500">
-          <Link2 strokeWidth={1.75} />
+        <span className="text-blue-500 shrink-0">
+          <Link2 size={16} strokeWidth={1.75} />
         </span>
       </div>
 
-      <div className="mt-10 flex justify-center">
+      {/* Scan button */}
+      <div className="mt-8 flex justify-center">
         <button
-          onClick={sendUrl}
-          className="flex justify-center items-center  h-10 rounded-xl px-4 py-2 shadow-[0px_0px_10px_-3px_rgba(0,_0,_0,_0.8)]"
-          type="submit"
+          id="scan-btn"
+          onClick={handleScan}
+          disabled={loading || !url.trim()}
+          type="button"
+          aria-label="Scan URL for phishing"
+          className="flex items-center gap-1.5 h-10 rounded-xl px-5 text-sm bg-blue-500 text-white border-0
+            shadow-[0_1px_6px_rgba(59,130,246,0.4)] transition-[background-color,opacity] duration-200
+            hover:bg-blue-600 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
         >
-          <span>
-            <Play fill="#007AFF" strokeWidth={0} />
-          </span>
-          Scanning
+          {loading ? (
+            <>
+              <LoadingSpinner size="w-4 h-4" />
+              <span>Scanning…</span>
+            </>
+          ) : (
+            <>
+              <Play fill="#fff" strokeWidth={0} size={14} />
+              <span>Scan</span>
+            </>
+          )}
         </button>
       </div>
-      <div>{predictResult}</div>
+
+      {/* Error message */}
+      {error && (
+        <div
+          className="flex items-start gap-1.5 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg px-3 py-2 text-xs leading-snug mt-5"
+          role="alert"
+        >
+          <AlertCircle size={14} className="shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Result */}
+      {result && !error && (
+        <div className="mt-5">
+          <StatusBadge
+            prediction={result.prediction}
+            confidence={result.confidence}
+          />
+        </div>
+      )}
     </div>
   );
 };

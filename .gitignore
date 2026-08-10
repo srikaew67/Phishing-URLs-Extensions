@@ -1,4 +1,4 @@
-# Logs
+# ── Logs ─────────────────────────────────────────────────────
 logs
 *.log
 npm-debug.log*
@@ -7,22 +7,41 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# ── Node ─────────────────────────────────────────────────────
 node_modules
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# ── Environment variables ─────────────────────────────────────
+.env
+.env.local
+.env.*.local
+# ↑ ห้าม commit ค่า secret — ใช้ .env.example เป็น template แทน
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ── ML Model (ไม่ commit ไฟล์โมเดลขนาดใหญ่) ─────────────────
+*.pkl
+backend/models/
+
+# ── Python virtual environments ──────────────────────────────
+backend/env/
+backend/.venv/
+.venv/
+venv/
+
+# ── Editor directories and files ─────────────────────────────
 .vscode/*
 !.vscode/extensions.json
-.idea.\env\Scripts\activate
+.idea
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
-#backend
-backend/env/
-backend/models/

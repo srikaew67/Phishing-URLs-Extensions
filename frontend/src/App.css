@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
-/* Hide scrollbar but keep scrollable content */
+/* ── URL scroll strip ────────────────────────────────────────
+   Kept in CSS because ::-webkit-scrollbar pseudo-element
+   is not supported as a Tailwind utility.
+──────────────────────────────────────────────────────────── */
 .url-scroll {
-    overflow-x: scroll;
-    white-space: nowrap;
-    max-width: 170px; /* Adjust width as needed */
-  }
-  
-  .url-scroll::-webkit-scrollbar {
-    display: none; /* Hides the scrollbar */
-  }
-  
+  overflow-x: scroll;
+  white-space: nowrap;
+  max-width: 170px;
+  scrollbar-width: none; /* Firefox */
+}
+.url-scroll::-webkit-scrollbar {
+  display: none; /* Chrome / Safari */
+}
