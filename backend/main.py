@@ -2,14 +2,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List
+import os
 import pickle
 import warnings
 
 # Suppress sklearn version mismatch warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# Load model from pickle file
-with open("phishing.pkl", "rb") as f:
+# Load model from pickle file (absolute to current file directory)
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "phishing.pkl")
+with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)
 
 # FastAPI app with OpenAPI documentation metadata
