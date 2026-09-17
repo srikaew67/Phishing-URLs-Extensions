@@ -1,40 +1,42 @@
 # Phishing URLs Detection — Browser Extension
 
-Extension สำหรับ Chrome ที่ตรวจจับ URL ที่อาจเป็น Phishing บนหน้าเว็บที่กำลังเปิดอยู่ หรือจาก URL ที่กรอกเอง ขับเคลื่อนด้วยโมเดล Machine Learning (Logistic Regression + CountVectorizer) ที่ฝึกด้วย scikit-learn และ serve ผ่าน FastAPI
+Extension สำหรับ Chrome ที่ตรวจจับ URL ที่อาจเป็น Phishing บนหน้าเว็บที่กำลังเปิดอยู่ หรือจาก URL ที่กรอกเอง ด้วยโมเดล Machine Learning (Logistic Regression + CountVectorizer) ที่ฝึกด้วย scikit-learn และ serve ผ่าน FastAPI
 
 ---
 
-## สถาปัตยกรรมระบบ
+## System Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                 Browser Extension (Frontend)             │
-│          React 19 + Vite + Tailwind CSS v4               │
-│                                                          │
-│  ┌─────────────────┐     ┌──────────────────────────┐   │
-│  │  Scan this page │     │       Scan URL            │   │
-│  │  ─────────────  │     │  ──────────────────────   │   │
-│  │  ดึง external   │     │  รับ URL ที่ผู้ใช้กรอก    │   │
-│  │  links จากหน้า  │     │  ส่งเป็น list 1 รายการ   │   │
-│  │  ส่งตรวจทั้งหมด │     │                          │   │
-│  └────────┬────────┘     └────────────┬──────────────┘   │
-└───────────┼──────────────────────────┼──────────────────┘
-            │ POST /scan {urls: [...]} │ POST /scan {urls: ["..."]}
-            │                          │
-┌───────────▼──────────────────────────▼──────────────────┐
-│                      Backend (FastAPI)                   │
-│                   Python + scikit-learn                  │
-│                   localhost:8000                         │
-│                                                          │
-│  GET  /health     → ตรวจสอบสถานะ backend               │
-│  POST /scan       → รับ Payload รูปแบบ List ({urls: [...]})│
-│                     คืนค่าผลการทำนายในรูปแบบ List       │
-│                                                          │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │            phishing.pkl (ML Model)                │  │
-│  │   CountVectorizer + Logistic Regression Pipeline  │  │
-│  └───────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│                Browser Extension (Frontend)                │
+│             React 19 + Vite + Tailwind CSS v4              │
+│                                                            │
+│   ┌───────────────────────┐    ┌───────────────────────┐   │
+│   │    Scan this page     │    │       Scan URL        │   │
+│   │───────────────────────│    │───────────────────────│   │
+│   │  Extracts all links   │    │  Manual URL input     │   │
+│   │  from the active tab  │    │  Inspects single link │   │
+│   │  Batch URL analysis   │    │  Instant confidence   │   │
+│   └───────────┬───────────┘    └───────────┬───────────┘   │
+└───────────────┼────────────────────────────┼───────────────┘
+                │                            │
+                │  POST /scan {urls: [...]}  │  POST /scan {urls: ["..."]}
+                │                            │
+┌───────────────▼────────────────────────────▼───────────────┐
+│            Backend API (FastAPI + Render)                  │
+│        https://phishing-urls-extensions.onrender.com       │
+│          Local Development: http://127.0.0.1:8000          │
+│                                                            │
+│    GET  /health  → Health check status                     │
+│    POST /scan    → Batch & single URL phishing prediction  │
+│                                                            │
+│    ┌──────────────────────────────────────────────────┐    │
+│    │                  phishing.pkl                    │    │
+│    │   CountVectorizer + LogisticRegression Pipeline  │    │
+│    │    - Trained on 651k URLs (Accuracy ~92.5%) -    │    │
+│    │           Managed via FastAPI Lifespan           │    │
+│    └──────────────────────────────────────────────────┘    │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -44,35 +46,46 @@ Extension สำหรับ Chrome ที่ตรวจจับ URL ที่
 ```text
 Phishing-URLs-Extensions/
 ├── backend/
-│   ├── main.py                 # FastAPI app (CORS, /health, /scan)
+│   ├── main.py                 # FastAPI app (lifespan, logging, CORS, /health, /scan)
 │   ├── requirements.txt
-│   └── phishing.pkl            # ML model (ไม่ได้ commit ขึ้น git)
-└── frontend/
-    ├── public/
-    │   ├── manifest.json       # Chrome Extension Manifest v3
-    │   ├── icon16.png
-    │   ├── icon48.png
-    │   └── icon128.png
-    ├── src/
-    │   ├── assets/
-    │   │   └── Logo.svg
-    │   ├── config/
-    │   │   └── api.js          # Centralized API endpoint config
-    │   ├── hooks/
-    │   │   └── usePhishingApi.js   # Custom hook สำหรับ API calls
-    │   ├── components/
-    │   │   ├── ScanPage.jsx    # สแกน links ทั้งหมดบนหน้าที่เปิดอยู่
-    │   │   ├── ScanUrl.jsx     # สแกน URL เดียวที่กรอกเอง
-    │   │   ├── LoadingSpinner.jsx
-    │   │   └── StatusBadge.jsx # แสดงผล Safe / Phishing
-    │   ├── App.jsx             # Root component + Tab navigation
-    │   ├── App.css             # Tailwind import + url-scroll helper
-    │   ├── index.css
-    │   ├── main.jsx
-    │   └── background.js       # Chrome Extension Service Worker
-    ├── .env.example
-    ├── package.json
-    └── vite.config.js
+│   ├── .python-version         # Pinned Python 3.11.9 for deployment
+│   ├── phishing.pkl            # ML model
+│   └── tests/                  # Automated unit test suite
+│       ├── __init__.py
+│       └── test_main.py        # Pytest test cases
+├── model/
+│   ├── train.py                # Scikit-learn pipeline
+│   ├── requirements.txt        # Dependencies
+│   └── malicious_phish.csv     # Kaggle dataset 651k URLs 
+├── frontend/
+│   ├── public/
+│   │   ├── manifest.json       # Chrome Extension Manifest v3
+│   │   ├── icon16.png
+│   │   ├── icon48.png
+│   │   └── icon128.png
+│   ├── src/
+│   │   ├── assets/
+│   │   │   └── Logo.svg
+│   │   ├── config/
+│   │   │   └── api.js          # Centralized API endpoint config
+│   │   ├── hooks/
+│   │   │   └── usePhishingApi.js   # Custom hook สำหรับ API calls
+│   │   ├── components/
+│   │   │   ├── ScanPage.jsx    # สแกน links ทั้งหมดบนหน้าที่เปิดอยู่
+│   │   │   ├── ScanUrl.jsx     # สแกน URL เดียวที่กรอกเอง
+│   │   │   ├── LoadingSpinner.jsx
+│   │   │   └── StatusBadge.jsx # แสดงผล Safe / Phishing
+│   │   ├── App.jsx             # Root component + Tab navigation
+│   │   ├── App.css             # Tailwind import
+│   │   ├── index.css
+│   │   ├── main.jsx
+│   │   └── background.js       # Chrome Extension Service Worker
+│   ├── .env.example
+│   ├── package.json
+│   └── vite.config.js
+├── pytest.ini                  # Pytest configuration
+├── render.yaml                 # Render Configuration
+└── .python-version             # Python version pin (3.11.9)
 ```
 
 ---
@@ -82,19 +95,23 @@ Phishing-URLs-Extensions/
 - **Scan this page** — ดึง external link ทั้งหมดจากหน้าเว็บปัจจุบัน แล้วส่งตรวจ Phishing พร้อมกัน
 - **Scan URL** — กรอก URL เองและตรวจสอบทีละ URL พร้อมแสดง confidence score
 - **ซ่อน/แสดงใน Browser** — ซ่อน link ที่ตรวจพบว่าเป็น Phishing บนหน้าเว็บได้ทันที
-- **Backend Status Indicator** — แสดงสถานะการเชื่อมต่อ backend (Online / Offline) แบบ real-time
+- **Backend Status Indicator** — แสดงสถานะการเชื่อมต่อ backend
 - **Confidence Score** — แสดงความมั่นใจของโมเดล (%) ในการวิเคราะห์แต่ละ URL
 
 ---
 
 ## ชุดข้อมูลและโมเดล (Dataset & Model)
 
-โปรเจกต์นี้เทรนโมเดล Machine Learning โดยอ้างอิงและใช้ชุดข้อมูล Phishing URLs จาก Kaggle:
+โปรเจกต์นี้ฝึกโมเดล Machine Learning โดยใช้ชุดข้อมูลจาก Kaggle:
 
-- **Dataset / Reference Link**: [Phishing Sites Detector - Complete Info (Kaggle)](https://www.kaggle.com/code/taruntiwarihp/phishing-sites-detector-complete-info#Read-My-Article-on-Medium-here)
-- **Model Pipeline**: `scikit-learn` Pipeline ประกอบด้วย:
-  - **Feature Extraction**: `CountVectorizer` สำหรับแปลงลักษณะข้อความของ URL เป็น Feature Vectors
-  - **Classifier**: `LogisticRegression` สำหรับทำ Binary Classification (`bad` / `good` → Phishing / Legitimate)
+- **Dataset**: [Malicious URLs dataset](https://www.kaggle.com/datasets/sid321axn/malicious-urls-dataset/data?select=malicious_phish.csv) เผยแพร่โดย **Manu Siddhartha** ([@sid321axn](https://www.kaggle.com/sid321axn)) บน Kaggle
+  - **ไฟล์ที่ใช้**: `malicious_phish.csv` (จำนวน **651,191 รายการ**)
+  - **โครงสร้างคลาสเดิม**: `benign` (428,103), `defacement` (96,457), `phishing` (94,111), `malware` (32,520)
+  - **การปรับใช้ในระบบ**: แมป `benign` $\rightarrow$ `good` (ปลอดภัย) และรวมกลุ่มภัยคุกคาม (`phishing`, `defacement`, `malware`) $\rightarrow$ `bad` (เสี่ยง/Phishing)
+- **Reference & Inspiration**: [Phishing Sites Detector - Complete Info](https://www.kaggle.com/code/taruntiwarihp/phishing-sites-detector-complete-info#Read-My-Article-on-Medium-here) โดย Tarun Tiwari
+- **Model Pipeline**: พัฒนาด้วย `scikit-learn` Pipeline ประกอบด้วย:
+  - **Feature Extraction**: `CountVectorizer` (คัดกรองคำด้วย Token Pattern และตัด Protocol Stop Words ออกเพื่อลด Bias)
+  - **Classifier**: `LogisticRegression` สำหรับการทำ Binary Classification (`bad` / `good` → Phishing / Legitimate) แม่นยำ ~92.5% บนชุดทดสอบ 1.3 แสนรายการ
 
 ---
 
@@ -146,12 +163,24 @@ Phishing-URLs-Extensions/
 ### ข้อกำหนดเบื้องต้น
 
 - **Node.js** 18+
-- **Python** 3.9–3.11
-- ไฟล์ `phishing.pkl` (ML model ที่ฝึกไว้แล้ว)
+- **Python** 3.11
+- ไฟล์ `backend/phishing.pkl`
 
 ---
 
-### Backend Setup
+### การเทรนโมเดล (Model Training)
+
+หากต้องการฝึกโมเดลใหม่จากชุดข้อมูล [malicious_phish.csv](model/malicious_phish.csv):
+
+```bash
+pip install -r model/requirements.txt
+python model/train.py
+```
+> สคริปต์จะทำการแมปคลาส แบ่ง Train/Test 80/20 ประเมิน Accuracy (~92.5%) และบันทึกโมเดลไปที่ `backend/phishing.pkl` โดยอัตโนมัติ
+
+---
+
+### Backend Setup (Local)
 
 #### 1. เข้าไปที่ backend directory
 
@@ -165,23 +194,23 @@ cd backend
 pip install -r requirements.txt
 ```
 
-#### 3. วาง model ไว้ใน backend/
-
-```
-backend/
-└── phishing.pkl    ← ไฟล์ ML model (CountVectorizer + LogisticRegression Pipeline)
-```
-
-#### 4. รัน API server
+#### 3. รัน Unit Tests (Automated Testing)
 
 ```bash
-cd backend
+pytest -v
+```
+> ทดสอบ Endpoint `/health`, Edge cases และการจำแนกประเภท URL ด้วย `pytest` และ `httpx`
+
+#### 4. รัน API server แบบ Local
+
+```bash
 python -m uvicorn main:app --reload --port 8000
 ```
 
 API จะพร้อมใช้งานที่ `http://127.0.0.1:8000`
 
 ---
+
 
 ### Frontend Setup
 
@@ -195,12 +224,12 @@ cd frontend
 
 ```bash
 cp .env.example .env
-# แก้ไข VITE_API_URL หาก backend รันอยู่บน port อื่น
+# ปรับ VITE_API_URL ตามต้องการ (ค่าเริ่มต้นชี้ไปที่ Render Cloud API)
 ```
 
-| Variable | Default | คำอธิบาย |
-|----------|---------|----------|
-| `VITE_API_URL` | `http://127.0.0.1:8000` | Base URL ของ backend API |
+| Variable | Default (.env.example) | คำอธิบาย |
+|----------|------------------------|----------|
+| `VITE_API_URL` | `https://phishing-urls-extensions.onrender.com` | Base URL ของ backend API (หรือเปลี่ยนเป็น `http://127.0.0.1:8000` สำหรับ local dev) |
 
 #### 3. ติดตั้ง dependencies
 
@@ -223,9 +252,9 @@ npm run build
 1. เปิด Chrome แล้วไปที่ `chrome://extensions`
 2. เปิด **Developer mode** (toggle มุมขวาบน)
 3. คลิก **Load unpacked** แล้วเลือก folder `frontend/dist/`
-4. Extension จะปรากฏใน toolbar พร้อมใช้งาน
+4. Extension จะปรากฏใน toolbar พร้อมใช้งานทันที
 
-> **หมายเหตุ:** ต้องรัน backend ก่อนทุกครั้งที่จะใช้ extension
+> **หมายเหตุ:** Extension สามารถเชื่อมต่อกับ Production API บน Render ได้โดยตรง หากต้องการทดสอบ Local ให้แก้ไข `VITE_API_URL` ใน `frontend/.env` แล้วสั่ง `npm run build` ใหม่
 
 ---
 
@@ -246,25 +275,20 @@ npm run build
 
 | เทคโนโลยี | เวอร์ชัน | บทบาท |
 |-----------|---------|-------|
-| Python | 3.9–3.11 | Runtime |
-| FastAPI | 0.115 | Web framework |
+| Python | 3.11.9 | Runtime |
+| FastAPI | 0.115 | Web framework (Lifespan Context Manager) |
 | Uvicorn | 0.34 | ASGI server |
-| scikit-learn | latest | ML model (CountVectorizer + LogisticRegression) |
-| Pydantic | 2 | Request/Response validation |
+| scikit-learn | 1.9+ | ML model (CountVectorizer + LogisticRegression Pipeline) |
+| Pydantic | 2.10 | Request/Response validation |
+| Pytest | 9.1 | Automated Unit Testing |
+| HTTPX | 0.28 | Async TestClient dependency |
+| Render | Cloud | Hosting Platform (Singapore Region) |
 
 ---
 
-## สิ่งที่ได้เรียนรู้จากโปรเจกต์นี้
-
-โปรเจกต์นี้รวมการพัฒนาหลายส่วนเข้าด้วยกัน ตั้งแต่การฝึก ML model ด้วย scikit-learn จากชุดข้อมูล Kaggle การ serve ผ่าน FastAPI การสร้าง Chrome Extension ด้วย Manifest v3 และการ inject script เข้าไปใน browser page จุดที่น่าสนใจคือการใช้ `chrome.scripting.executeScript` เพื่อดึง external links และซ่อน phishing links บนหน้าเว็บจริงได้โดยตรงจาก extension popup
-
----
 
 ## แนวทางพัฒนาต่อ
 
-- เพิ่ม **Whitelist** ให้ผู้ใช้สามารถ mark URL ว่าปลอดภัยได้
-- เพิ่ม **ประวัติการตรวจ** URL ที่เคยสแกนไว้
-- เปลี่ยนโมเดลเป็น **DistilBERT** หรือ Transformer-based model เพื่อความแม่นยำสูงขึ้น
-- เพิ่ม **context menu** ให้คลิกขวาที่ link แล้วตรวจได้เลย
-- รองรับ **Firefox** ผ่าน WebExtensions API
-- เพิ่ม **unit test** สำหรับ prediction logic และ frontend hook
+- [ ] เพิ่ม **Whitelist** ให้ผู้ใช้สามารถ mark URL ว่าปลอดภัยได้
+- [ ] เพิ่ม **ประวัติการตรวจ** URL ที่เคยสแกนไว้
+- [ ] เปลี่ยนเป็น Model LLM เพื่อความแม่นยำสูงขึ้น

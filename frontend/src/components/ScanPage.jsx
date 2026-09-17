@@ -41,8 +41,14 @@ function showPhishingLinks() {
   });
 }
 
+const isInjectableUrl = (url) => {
+  if (!url) return false;
+  return url.startsWith("http://") || url.startsWith("https://");
+};
+
 const ScanPage = () => {
   const [currentUrl, setCurrentUrl] = useState("");
+  const [isRestrictedPage, setIsRestrictedPage] = useState(false);
   const [externalUrls, setExternalUrls] = useState([]);
   const [phishingUrls, setPhishingUrls] = useState([]);
   const [hiddenOnPage, setHiddenOnPage] = useState(false);
@@ -55,6 +61,10 @@ const ScanPage = () => {
     chrome.scripting.executeScript(
       { target: { tabId }, func: extractExternalUrls, args: [mainDomain] },
       async (results) => {
+        if (chrome.runtime.lastError) {
+          // Suppress error on restricted pages (e.g. chrome://, edge://, chrome-extension://)
+          return;
+        }
         if (!results?.[0]?.result) return;
         const urls = results[0].result;
         setExternalUrls(urls);
@@ -75,8 +85,16 @@ const ScanPage = () => {
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (!tabs[0]) return;
-      const url = tabs[0].url;
+      const url = tabs[0].url || "";
       setCurrentUrl(url);
+
+      // Skip chrome://, edge://, about: and other non-http URLs
+      if (!isInjectableUrl(url)) {
+        setIsRestrictedPage(true);
+        return;
+      }
+
+      setIsRestrictedPage(false);
       const m = url.match(DOMAIN_REGEX);
       extractPageUrls(tabs[0].id, m?.[1] ?? "");
     });
@@ -84,17 +102,23 @@ const ScanPage = () => {
 
   const togglePageVisibility = useCallback(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (!tabs[0]) return;
+      if (!tabs[0] || !isInjectableUrl(tabs[0].url)) return;
       const { id: tabId } = tabs[0];
       setHiddenOnPage((prev) => {
         if (prev) {
-          chrome.scripting.executeScript({ target: { tabId }, func: showPhishingLinks });
+          chrome.scripting.executeScript(
+            { target: { tabId }, func: showPhishingLinks },
+            () => { void chrome.runtime.lastError; }
+          );
         } else {
-          chrome.scripting.executeScript({
-            target: { tabId },
-            func: hidePhishingLinks,
-            args: [phishingUrlsRef.current],
-          });
+          chrome.scripting.executeScript(
+            {
+              target: { tabId },
+              func: hidePhishingLinks,
+              args: [phishingUrlsRef.current],
+            },
+            () => { void chrome.runtime.lastError; }
+          );
         }
         return !prev;
       });

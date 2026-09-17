@@ -24,6 +24,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+.pytest_cache/
 
 # ── ML Model & Dataset (ไม่ commit ชุดข้อมูลขนาดใหญ่) ─────────
 *.pkl

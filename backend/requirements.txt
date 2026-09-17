@@ -4,3 +4,5 @@ pydantic==2.10.6
 starlette>=0.41.0          # CORS middleware dependency
 scikit-learn               # sklearn Pipeline (CountVectorizer + LogisticRegression)
 nltk                       # required by sklearn text pipeline
+httpx                      # required for FastAPI TestClient
+pytest                     # unit test framework

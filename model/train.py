@@ -1,3 +1,11 @@
+"""
+Phishing URL Detector - Model Training Script
+Dataset Credit:
+    Malicious URLs dataset by Manu Siddhartha (sid321axn)
+    Source: https://www.kaggle.com/datasets/sid321axn/malicious-urls-dataset
+    File: malicious_phish.csv (651,191 URLs)
+"""
+
 import os
 import sys
 import pickle
